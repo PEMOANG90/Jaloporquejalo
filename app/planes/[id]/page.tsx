@@ -1,23 +1,37 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { joinPlan, leavePlan } from "@/app/actions";
 import JoinButton from "@/components/JoinButton";
 import ReportButton from "@/components/ReportButton";
 import { BackIcon, CalendarIcon, PinIcon, ShieldIcon } from "@/components/Icons";
-import { findPlan, plans } from "@/lib/data";
+import { getAccount, getGoing } from "@/lib/account";
+import { findPlan } from "@/lib/data";
+import { accountsEnabled } from "@/lib/supabase";
 
 const avatarColors = ["#0B6E6E", "#C2336A", "#8A5A00", "#3D4BA8", "#5B3D8A"];
 
-export function generateStaticParams() {
-  return plans.map((plan) => ({ id: plan.id }));
-}
+const errors: Record<string, string> = {
+  lleno: "Este plan ya se llenó. Pídele a Jalo otro parecido.",
+  unirse: "No pudimos apartarte el lugar. Intenta de nuevo.",
+};
 
-export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PlanPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
   const { id } = await params;
+  const { error } = await searchParams;
   const plan = findPlan(id);
   if (!plan) notFound();
 
-  const shown = plan.going.slice(0, 5);
-  const free = Math.max(0, Math.min(2, plan.spots - plan.going.length));
+  const [account, going] = await Promise.all([getAccount(), getGoing(plan.id)]);
+  const joined = Boolean(account && going.userIds.includes(account.user.id));
+  const full = going.names.length >= plan.spots;
+  const shown = going.names.slice(0, 5);
+  const free = Math.max(0, Math.min(2, plan.spots - going.names.length));
 
   return (
     <main className="app" style={{ paddingTop: 0 }}>
@@ -45,12 +59,12 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
       <section className="stack" aria-labelledby="quien-va">
         <div className="row between">
           <h2 id="quien-va" style={{ fontSize: 18 }}>Quién va</h2>
-          <span className="muted">{plan.going.length} de {plan.spots} lugares</span>
+          <span className="muted">{going.names.length} de {plan.spots} lugares</span>
         </div>
         <div className="row" style={{ flexWrap: "wrap" }}>
           {shown.map((name, i) => (
-            <div key={name} className="avatar" title={name} style={{ background: avatarColors[i % avatarColors.length] }}>
-              {name[0]}
+            <div key={`${name}-${i}`} className="avatar" title={name || "Alguien"} style={{ background: avatarColors[i % avatarColors.length] }}>
+              {name ? name[0].toUpperCase() : "•"}
             </div>
           ))}
           {Array.from({ length: free }, (_, i) => (
@@ -61,8 +75,22 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 
       <p className="muted">Unirte es gratis. Solo pagas lo que consumas en el negocio.</p>
 
+      {error && errors[error] && <p className="notice error" role="alert">{errors[error]}</p>}
+
       <div className="row">
-        <JoinButton />
+        {!accountsEnabled ? (
+          <JoinButton />
+        ) : !account?.profile ? (
+          <Link href={account ? "/perfil" : "/entrar"} className="btn btn-primary grow">Entra para unirte</Link>
+        ) : joined ? (
+          <form action={leavePlan.bind(null, plan.id)} className="row grow">
+            <button type="submit" className="btn btn-outline grow">Ya vas ✓ · Salir</button>
+          </form>
+        ) : (
+          <form action={joinPlan.bind(null, plan.id)} className="row grow">
+            <button type="submit" className="btn btn-primary grow" disabled={full}>{full ? "Plan lleno" : "Me uno"}</button>
+          </form>
+        )}
         <Link href="/invitar" className="btn btn-outline grow">Invitar amigos</Link>
       </div>
       <ReportButton />
