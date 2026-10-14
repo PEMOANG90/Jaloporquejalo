@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { JALO_SYSTEM_PROMPT } from "@/lib/jalo";
+import { offlineReply } from "@/lib/jaloOffline";
 
 type ChatTurn = { role: "user" | "assistant"; content: string };
 
@@ -57,10 +58,10 @@ export async function POST(request: Request) {
       .trim();
     return reply(text || "Se me fue la idea. ¿Me repites qué buscas?");
   } catch (error) {
-    // Sin credenciales, el SDK falla antes de llamar a la API (no es un APIError).
+    // Sin clave de IA (el SDK falla antes de llamar a la API) o con una clave inválida,
+    // Jalo sigue funcionando: recomienda planes del catálogo por palabras clave.
     if (error instanceof Anthropic.AuthenticationError || !(error instanceof Anthropic.APIError)) {
-      console.error("Jalo no está conectado a Anthropic:", error instanceof Error ? error.message : error);
-      return reply("Todavía no estoy conectado. Mientras tanto, revisa los planes de Inicio.", 503);
+      return reply(offlineReply(messages[messages.length - 1].content));
     }
     if (error instanceof Anthropic.RateLimitError) {
       return reply("Estoy atendiendo a mucha gente. Intenta en un momento.", 429);

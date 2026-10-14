@@ -10,6 +10,8 @@ export type Plan = {
   spots: number;
   going: string[];
   tags: string[];
+  // Palabras que usa Jalo sin IA para saber si un plan encaja con lo que piden.
+  keywords: string[];
 };
 
 export const plans: Plan[] = [
@@ -23,6 +25,7 @@ export const plans: Plan[] = [
     spots: 6,
     going: ["Luis", "Sofi", "Marco", "Rosa"],
     tags: ["Para tu grupo", "Oferta 2x1"],
+    keywords: ["sabado", "manana", "cafe", "coffee", "tranqui", "desayuno", "platicar"],
   },
   {
     id: "after-party",
@@ -34,6 +37,7 @@ export const plans: Plan[] = [
     spots: 10,
     going: ["Dani", "Vale", "Toño"],
     tags: ["Noche"],
+    keywords: ["sabado", "noche", "fiesta", "after", "bailar", "antro", "party", "fin de semana"],
   },
   {
     id: "vaquero-run",
@@ -45,6 +49,7 @@ export const plans: Plan[] = [
     spots: 20,
     going: ["Paco", "Lupita", "Iván", "Mar", "Beto"],
     tags: ["Al aire libre"],
+    keywords: ["domingo", "manana", "correr", "run", "carrera", "ejercicio", "aire libre", "deporte", "vaquero"],
   },
 ];
 

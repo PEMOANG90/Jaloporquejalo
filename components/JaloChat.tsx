@@ -9,6 +9,8 @@ type Turn = { role: "user" | "assistant"; content: string };
 
 const greeting: Turn = { role: "assistant", content: "¡Hola! Soy Jalo. ¿Qué se te antoja hacer y con quién?" };
 
+const quickReplies = ["Algo el sábado", "Plan de noche", "Algo al aire libre", "Ver todos"];
+
 function mentionedPlans(text: string) {
   const lower = text.toLowerCase();
   return plans.filter((plan) => lower.includes(plan.title.toLowerCase()));
@@ -24,9 +26,8 @@ export default function JaloChat() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [turns, waiting]);
 
-  async function send(event: React.FormEvent) {
-    event.preventDefault();
-    const text = draft.trim();
+  async function send(message: string) {
+    const text = message.trim();
     if (!text || waiting) return;
     const next = [...turns, { role: "user" as const, content: text }];
     setTurns(next);
@@ -66,7 +67,21 @@ export default function JaloChat() {
         <div ref={endRef} />
       </div>
       <div className="composer">
-        <form onSubmit={send}>
+        {turns.length === 1 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+            {quickReplies.map((text) => (
+              <button key={text} type="button" className="chip" style={{ border: "none", cursor: "pointer", font: "inherit", minHeight: 36 }} onClick={() => send(text)}>
+                {text}
+              </button>
+            ))}
+          </div>
+        )}
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            send(draft);
+          }}
+        >
           <label htmlFor="mensaje" className="sr-only">Escríbele a Jalo</label>
           <input id="mensaje" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Escríbele a Jalo…" autoComplete="off" maxLength={2000} />
           <button type="submit" className="icon-btn" aria-label="Enviar" disabled={waiting || !draft.trim()}>
