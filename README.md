@@ -8,11 +8,11 @@ Necesitas Node.js 20 o más reciente.
 
 ```bash
 npm install
-cp .env.example .env.local   # agrega tu ANTHROPIC_API_KEY para que el chat de Jalo responda
+cp .env.example .env.local   # opcional: agrega ANTHROPIC_API_KEY para que Jalo use IA
 npm run dev
 ```
 
-Abre http://localhost:3000. Sin la clave, todo funciona y el chat de Jalo avisa que aún no está conectado.
+Abre http://localhost:3000. Sin la clave, todo funciona gratis: Jalo recomienda planes por palabras clave. Con la clave, Jalo conversa con IA.
 
 ## Pantallas
 
